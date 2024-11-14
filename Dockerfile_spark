@@ -1,0 +1,39 @@
+FROM bitnami/spark
+
+USER root
+RUN install_packages wget build-essential zlib1g-dev libffi-dev libssl-dev
+
+# Instalação do Python 3.11.6
+RUN wget https://www.python.org/ftp/python/3.11.6/Python-3.11.6.tgz \
+    && tar -xzf Python-3.11.6.tgz \
+    && cd Python-3.11.6 \
+    && ./configure --enable-optimizations --with-ssl \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -rf Python-3.11.6 Python-3.11.6.tgz
+
+# Baixar JAR do PostgreSQL
+RUN wget https://jdbc.postgresql.org/download/postgresql-42.2.20.jar -P /opt/bitnami/spark/jars
+
+# Baixar JARs do Delta Lake
+# RUN wget https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.1.0/delta-core_2.12-2.1.0.jar -P /opt/bitnami/spark/jars
+# RUN wget https://repo1.maven.org/maven2/io/delta/delta-storage/2.1.0/delta-storage-2.1.0.jar -P /opt/bitnami/spark/jars
+
+# RUN wget https://repo1.maven.org/maven2/io/delta/delta-spark_2.12/3.2.0/delta-spark_2.13-3.2.0.jar -P /opt/bitnami/spark/jars
+
+
+# Configuração do Python
+RUN ln -s /usr/local/bin/python3.11 /usr/bin/python \
+    && ln -s /usr/local/bin/python3.11 /usr/bin/python3
+
+ENV PATH /usr/local/bin:$PATH
+RUN python --version
+
+# Configurações do PySpark
+ENV PYSPARK_PYTHON=/usr/local/bin/python3.11
+ENV PYTHONPATH=/usr/local/bin/python3.11
+ENV PYSPARK_DRIVER_PYTHON=/usr/local/bin/python3.11
+
+# Instalação do pacote Delta no Python
+RUN /usr/local/bin/python3.11 -m pip install delta-spark==3.2.0

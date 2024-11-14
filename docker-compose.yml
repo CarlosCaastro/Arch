@@ -1,0 +1,97 @@
+version: '3'
+
+x-spark-common: &spark-common
+  build:
+    context: .
+    dockerfile: Dockerfile_spark
+  volumes:
+    - ./jobs:/opt/bitnami/spark/jobs
+    - ./data:/opt/data
+  networks:
+    - code-carlos
+
+# x-airflow-common: &airflow-common
+#   build:
+#     context: .
+#     dockerfile: Dockerfile
+#   env_file:
+#     - airflow.env
+#   volumes:
+#     - ./jobs:/opt/airflow/jobs
+#     - ./dags:/opt/airflow/dags
+#     - ./logs:/opt/airflow/logs
+#     - ./data:/opt/data
+#   depends_on:
+#     - postgres
+#   networks:
+#     - code-carlos
+
+services:
+  spark-master:
+    <<: *spark-common
+    command: bin/spark-class org.apache.spark.deploy.master.Master
+    ports:
+      - "9090:8080"
+      - "7077:7077"
+    environment:
+      PYSPARK_PYTHON: /usr/local/bin/python3.11
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3.11
+
+  spark-worker:
+    <<: *spark-common
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    depends_on:
+      - spark-master
+    ports:
+      - "9091:8081"
+    environment:
+      SPARK_MODE: worker
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 1g
+      SPARK_MASTER_URL: spark://spark-master:7077
+      PYSPARK_PYTHON: /usr/local/bin/python3.11
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3.11
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./data:/opt/data
+
+  # postgres:
+  #   image: postgres:14.0
+  #   environment:
+  #     - POSTGRES_USER=airflow
+  #     - POSTGRES_PASSWORD=airflow
+  #     - POSTGRES_DB=airflow
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - code-carlos
+
+  # webserver:
+  #   <<: *airflow-common
+  #   command: bash -c "python /opt/airflow/dags/scripts/connections.py && airflow webserver"
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - postgres
+  #     - scheduler
+
+  # scheduler:
+  #   <<: *airflow-common
+  #   command: bash -c "airflow db migrate && airflow users create --username airflow --firstname Carlos --lastname Castro --role Admin --email carlos.candradr@gmail.com --password airflow && airflow scheduler"
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    volumes:
+      - ./minio/data:/data
+    networks:
+      - code-carlos
+
+networks:
+  code-carlos:
