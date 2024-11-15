@@ -39,6 +39,6 @@ ENV PYSPARK_DRIVER_PYTHON=/usr/local/bin/python3.11
 RUN /usr/local/bin/python3.11 -m pip install --upgrade pip
 
 # Instalação do pacote Delta no Python
-RUN /usr/local/bin/python3.11 -m pip install delta-spark==3.2.0
+RUN /usr/local/bin/python3.11 -m pip install delta-spark==3.2.0 requests boto3
 
 COPY ./conf/hive-site.xml /opt/bitnami/spark/conf/hive-site.xml

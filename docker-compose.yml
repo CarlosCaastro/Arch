@@ -29,53 +29,53 @@ x-spark-common: &spark-common
 
 services:
 
-  postgres:
-    image: postgres:16
-    container_name: hive-metastore-postgres
-    environment:
-      POSTGRES_USER: hive
-      POSTGRES_PASSWORD: hivepass123
-      POSTGRES_DB: hive_metastore
-      PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hive"]
-      interval: 5s
-      retries: 5
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - code-carlos
+  # postgres:
+  #   image: postgres:16
+  #   container_name: hive-metastore-postgres
+  #   environment:
+  #     POSTGRES_USER: hive
+  #     POSTGRES_PASSWORD: hivepass123
+  #     POSTGRES_DB: hive_metastore
+  #     PGDATA: /var/lib/postgresql/data/pgdata
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U hive"]
+  #     interval: 5s
+  #     retries: 5
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - code-carlos
 
-  hive-metastore:
-    image: apache/hive:4.0.0-alpha-2
-    container_name: hive-metastore
-    environment:
-      SERVICE_NAME: metastore
-      DB_DRIVER: postgres
-      SERVICE_OPTS: >
-        -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
-        -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/hive_metastore
-        -Djavax.jdo.option.ConnectionUserName=hive
-        -Djavax.jdo.option.ConnectionPassword=hivepass123
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "9083:9083"
-      - "10000:10000"
-    volumes:
-      - ./warehouse:/opt/bitnami/spark/warehouse
-      - ./hive-conf/hive-site.xml:/opt/hive/conf/hive-site.xml
-    command: >
-      bash -c "
-      sleep 10 && 
-      /opt/hive/bin/schematool -dbType postgres -initSchema &&
-      /opt/hive/bin/hive --service metastore
-      "
-    networks:
-      - code-carlos
+  # hive-metastore:
+  #   image: apache/hive:4.0.0-alpha-2
+  #   container_name: hive-metastore
+  #   environment:
+  #     SERVICE_NAME: metastore
+  #     DB_DRIVER: postgres
+  #     SERVICE_OPTS: >
+  #       -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
+  #       -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/hive_metastore
+  #       -Djavax.jdo.option.ConnectionUserName=hive
+  #       -Djavax.jdo.option.ConnectionPassword=hivepass123
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   ports:
+  #     - "9083:9083"
+  #     - "10000:10000"
+  #   volumes:
+  #     - ./warehouse:/opt/bitnami/spark/warehouse
+  #     - ./hive-conf/hive-site.xml:/opt/hive/conf/hive-site.xml
+  #   command: >
+  #     bash -c "
+  #     sleep 10 && 
+  #     /opt/hive/bin/schematool -dbType postgres -initSchema &&
+  #     /opt/hive/bin/hive --service metastore
+  #     "
+  #   networks:
+  #     - code-carlos
 
   spark-master:
     <<: *spark-common
@@ -86,8 +86,8 @@ services:
     environment:
       PYSPARK_PYTHON: /usr/local/bin/python3.11
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3.11
-    depends_on:
-      - hive-metastore
+    # depends_on:
+    #   - hive-metastore
 
   spark-worker:
     <<: *spark-common
@@ -108,7 +108,6 @@ services:
       - ./data:/opt/data
       - ./warehouse:/opt/bitnami/spark/warehouse
       
-
   # postgres:
   #   image: postgres:14.0
   #   environment:
