@@ -2,6 +2,7 @@ BUCKET_NAME:str = "ifood"
 
 LANDING_LAYER_BUCKET_NAME:str = "landing"
 LANDING_BRONZE_BUCKET_NAME:str = "bronze"
+LANDING_SILVER_BUCKET_NAME:str = "silver"
 
 def generate_landing_layer_path(output_path:str) -> str:
     landing_layer_path  = f"s3a://{BUCKET_NAME}/{LANDING_LAYER_BUCKET_NAME}/{output_path}"
@@ -12,6 +13,11 @@ def generate_bronze_layer_path(output_path:str) -> str:
     bronze_layer_path  = f"s3a://{BUCKET_NAME}/{LANDING_BRONZE_BUCKET_NAME}/{output_path}"
 
     return bronze_layer_path
+
+def generate_silver_layer_path(output_path:str) -> str:
+    bronze_silver_path  = f"s3a://{BUCKET_NAME}/{LANDING_SILVER_BUCKET_NAME}/{output_path}"
+
+    return bronze_silver_path
 
 
 
