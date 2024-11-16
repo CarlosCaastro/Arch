@@ -98,8 +98,8 @@ services:
       - "9091:8081"
     environment:
       SPARK_MODE: worker
-      SPARK_WORKER_CORES: 2
-      SPARK_WORKER_MEMORY: 1g
+      SPARK_WORKER_CORES: 4
+      SPARK_WORKER_MEMORY: 2g
       SPARK_MASTER_URL: spark://spark-master:7077
       PYSPARK_PYTHON: /usr/local/bin/python3.11
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3.11
@@ -143,6 +143,24 @@ services:
       MINIO_ROOT_PASSWORD: minio123
     volumes:
       - ./minio/data:/data
+    networks:
+      - code-carlos
+
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      PYSPARK_PYTHON: /usr/local/bin/python3
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/opt/data
+    depends_on:
+      - spark-master
+      - minio
     networks:
       - code-carlos
 
