@@ -42,10 +42,22 @@ class LoadDelta(Load):
     def create_output(self):
         self.dataframe.write.mode("overwrite").format(self.file_format).options(**self.options).save(self.sink)
         self.create_table_in_catalog()
+        #print("Creating table in hive!")
 
     def create_table_in_catalog(self):
         #Script para criação da tabela no catalog desejado, executar com spark.sql, 
         #Formato CREATE EXTERNAL TABLE IF NOT EXIST <TABLE> USING DELTA LOCATION <self.sink>
+        # drop_table_query = f"""
+        #     DROP TABLE IF EXISTS {self.sink_name};
+        #     """
+        # create_table_query = f"""
+        #     CREATE EXTERNAL TABLE {self.sink_name}
+        #     USING delta
+        #     LOCATION '{self.sink}'
+        #     """
+        # self.spark_session.sql(drop_table_query)
+        
+        # self.spark_session.sql(create_table_query)
         pass
 
     def merge_output(self):
@@ -90,11 +102,13 @@ class LoadDelta(Load):
         
         control_table_entry_spark.write.mode("append").format("parquet").save(self.control_table)
 
+
     def set_catalog(self, catalog:str="catalog"):
         return catalog
     def set_schema(self, schema:str="schema"):
         return schema
     def set_table(self, table:str="table"):
+        
         return table
     def extract_last_update(self, **kwargs):
         pass

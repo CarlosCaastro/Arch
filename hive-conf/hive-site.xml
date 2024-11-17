@@ -44,7 +44,7 @@
     <!-- Configuração do Metastore -->
     <property>
         <name>javax.jdo.option.ConnectionURL</name>
-        <value>jdbc:postgresql://postgres:5432/hive_metastore</value>
+        <value>jdbc:postgresql://postgres:5432/airflow</value>
     </property>
     <property>
         <name>javax.jdo.option.ConnectionDriverName</name>
@@ -52,11 +52,11 @@
     </property>
     <property>
         <name>javax.jdo.option.ConnectionUserName</name>
-        <value>hive</value>
+        <value>airflow</value>
     </property>
     <property>
         <name>javax.jdo.option.ConnectionPassword</name>
-        <value>hivepass123</value>
+        <value>airflow</value>
     </property>
     <property>
         <name>datanucleus.schema.autoCreateAll</name>

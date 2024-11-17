@@ -6,7 +6,7 @@ from modulos.extract.ExtractDelta import ExtractDelta
 from modulos.configs.parametros import URL_POSTGRE, PROPERTIES_POSTGRE
 
 spark = SparkSession.builder \
-    .appName("MinIO Test") \
+    .appName("Dimension Calendar") \
     .master("spark://spark-master:7077") \
     .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
     .config("spark.hadoop.fs.s3a.access.key", "minio") \
@@ -17,6 +17,11 @@ spark = SparkSession.builder \
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
     .config("spark.sql.warehouse.dir", "s3a://ifood/warehouse") \
     .config("spark.sql.parquet.enableVectorizedReader", "false") \
+    .config("spark.sql.catalogImplementation", "hive") \
+    .config("javax.jdo.option.ConnectionURL", "jdbc:postgresql://postgres:5432/airflow") \
+    .config("javax.jdo.option.ConnectionUserName", "airflow") \
+    .config("javax.jdo.option.ConnectionPassword", "airflow") \
+    .enableHiveSupport() \
     .getOrCreate()
 
 
@@ -39,7 +44,7 @@ df = df.select("SK_CALENDAR", "HOUR", "DAY", "MONTH", "YEAR")
 
 load = LoadDelta(
     sink_path="d_calendar/", 
-    sink_name="files", 
+    sink_name="d_calendar", 
     keys="SK_CALENDAR", 
     file_format="delta",
     layer="gold").SetSparkSession(spark_session=spark).SetDataframe(df=df)
@@ -48,3 +53,4 @@ load.execute()
 
 df.write.jdbc(url=URL_POSTGRE, table="gold.d_calendar", mode="overwrite", properties=PROPERTIES_POSTGRE)
 
+spark.stop()

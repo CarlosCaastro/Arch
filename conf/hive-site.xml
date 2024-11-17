@@ -1,7 +1,7 @@
 <configuration>
    <property>
       <name>javax.jdo.option.ConnectionURL</name>
-      <value>jdbc:postgresql://postgres:5432/hive_metastore</value>
+      <value>jdbc:postgresql://postgres:5432/airflow</value>
       <description>JDBC connect string for a JDBC metastore</description>
    </property>
    <property>
@@ -11,12 +11,12 @@
    </property>
    <property>
       <name>javax.jdo.option.ConnectionUserName</name>
-      <value>hive</value>
+      <value>airflow</value>
       <description>Username to use against metastore database</description>
    </property>
    <property>
       <name>javax.jdo.option.ConnectionPassword</name>
-      <value>hivepass123</value>
+      <value>airflow</value>
       <description>Password to use against metastore database</description>
    </property>
    <property>

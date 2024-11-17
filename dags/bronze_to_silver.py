@@ -33,7 +33,8 @@ bronze_to_silver = SparkSubmitOperator(
     name=spark_app_name,
     conn_id=spark_conn,
     verbose=1,
-    conf={"spark.master": spark_master,
+    conf = {
+        "spark.master": spark_master,
         "spark.hadoop.fs.s3a.endpoint": "http://minio:9000",
         "spark.hadoop.fs.s3a.access.key": "minio",
         "spark.hadoop.fs.s3a.secret.key": "minio123",
@@ -42,8 +43,15 @@ bronze_to_silver = SparkSubmitOperator(
         "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
         "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
         "spark.sql.warehouse.dir": "s3a://ifood/warehouse",
-        "spark.sql.parquet.enableVectorizedReader": "false"},
-    packages="org.postgresql:postgresql:42.2.20,io.delta:delta-spark_2.12:3.2.0,io.delta:delta-storage:3.2.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262",
+        "spark.sql.parquet.enableVectorizedReader": "false",
+        "spark.sql.catalogImplementation": "hive",
+        "javax.jdo.option.ConnectionURL": "jdbc:postgresql://postgres:5432/airflow",
+        "javax.jdo.option.ConnectionUserName": "airflow",
+        "javax.jdo.option.ConnectionPassword": "airflow"
+    },
+    jars=",".join([f"/opt/bitnami/spark/jars/{jar}" for jar in os.listdir('/opt/bitnami/spark/jars')]),
+    packages="io.delta:delta-spark_2.12:3.2.0,io.delta:delta-storage:3.2.0",
+    driver_class_path="/opt/bitnami/spark/jars/postgresql-42.2.20.jar",
     dag=dag
 )
 

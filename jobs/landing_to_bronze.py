@@ -6,7 +6,7 @@ from modulos.utils.functions import get_list_files, fix_schemas
 from modulos.load.LoadDelta import LoadDelta
 
 spark = SparkSession.builder \
-    .appName("MinIO Test") \
+    .appName("Landing to Bronze") \
     .master("spark://spark-master:7077") \
     .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
     .config("spark.hadoop.fs.s3a.access.key", "minio") \
@@ -17,7 +17,13 @@ spark = SparkSession.builder \
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
     .config("spark.sql.warehouse.dir", "s3a://ifood/warehouse") \
     .config("spark.sql.parquet.enableVectorizedReader", "false") \
+    .config("spark.sql.catalogImplementation", "hive") \
+    .config("javax.jdo.option.ConnectionURL", "jdbc:postgresql://postgres:5432/airflow") \
+    .config("javax.jdo.option.ConnectionUserName", "airflow") \
+    .config("javax.jdo.option.ConnectionPassword", "airflow") \
+    .enableHiveSupport() \
     .getOrCreate()
+
 
 file_paths = get_list_files(spark , BUCKET_NAME, "landing/yellow_taxi_files")
 
@@ -37,8 +43,8 @@ for df in dataframes[1:]:
     final_df = final_df.unionByName(df)
 
 load = LoadDelta(
-    sink_path="yello_taxi/", 
-    sink_name="files", 
+    sink_path="yellow_taxi/", 
+    sink_name="bronze_yellow_taxi", 
     keys="VendorID,tpep_pickup_datetime,tpep_dropoff_datetime,improvement_surcharge,tolls_amount,passenger_count,trip_distance,PULocationID,total_amount", 
     file_format="delta",
     layer='bronze').SetSparkSession(spark_session=spark).SetDataframe(df=final_df)
@@ -47,4 +53,6 @@ load.execute()
 load.update_control_table(source_name="yellow_taxi_files", source_path="s3a://{BUCKET_NAME}/landing/yellow_taxi_files")
 
 final_df.write.jdbc(url=URL_POSTGRE, table="bronze.yellow_taxi", mode="overwrite", properties=PROPERTIES_POSTGRE)
+
+spark.stop()
 
