@@ -32,21 +32,21 @@ extract = ExtractDelta(
 
 df = extract.execute()
 df_filtred = df.select("VENDORID", "PASSENGER_COUNT", "TOTAL_AMOUNT", "TPEP_PICKUP_DATETIME", "TPEP_DROPOFF_DATETIME")
-agg_df = df_filtred.groupBy("VENDORID", "TPEP_PICKUP_DATETIME") \
+
+df_bef_sk = df_filtred.withColumn("DAY", dayofmonth(col("TPEP_PICKUP_DATETIME"))) \
+               .withColumn("MONTH", month(col("TPEP_PICKUP_DATETIME"))) \
+               .withColumn("YEAR", year(col("TPEP_PICKUP_DATETIME"))) \
+               .withColumn("HOUR", hour(col("TPEP_PICKUP_DATETIME")))
+
+agg_df = df_bef_sk.groupBy("VENDORID", "YEAR", "MONTH", "DAY","HOUR") \
            .agg(
                sum("PASSENGER_COUNT").alias("TOTAL_PASSENGERS"),
                sum("TOTAL_AMOUNT").alias("TOTAL_AMOUNT")
            )
 
+df_with_sk = agg_df.withColumn("SK_CALENDAR", abs(hash(col("YEAR"), col("MONTH"), col("DAY"), col("HOUR"))).cast("bigint"))
 
-df_bef_sk = agg_df.withColumn("DAY", dayofmonth(col("TPEP_PICKUP_DATETIME"))) \
-               .withColumn("MONTH", month(col("TPEP_PICKUP_DATETIME"))) \
-               .withColumn("YEAR", year(col("TPEP_PICKUP_DATETIME"))) \
-               .withColumn("HOUR", hour(col("TPEP_PICKUP_DATETIME")))
-
-df_with_sk = df_bef_sk.withColumn("SK_CALENDAR", abs(hash(col("YEAR"), col("MONTH"), col("DAY"), col("HOUR"))).cast("bigint"))
-
-df_f_yellow = df_with_sk.select("VENDORID", "TPEP_PICKUP_DATETIME","SK_CALENDAR", "TOTAL_PASSENGERS", "TOTAL_AMOUNT")
+df_f_yellow = df_with_sk.select("VENDORID","SK_CALENDAR", "TOTAL_PASSENGERS", "TOTAL_AMOUNT")
 
 load = LoadDelta(
     sink_path="f_yellow_taxi/", 

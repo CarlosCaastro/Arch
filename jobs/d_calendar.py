@@ -33,12 +33,14 @@ df = df.withColumn("DAY", dayofmonth("data")) \
        .withColumn("YEAR", year("data")) \
        .withColumn("HOUR", col("hour"))
 
-df = df.withColumn("SK", abs(hash(col("YEAR"), col("MONTH"), col("DAY"), col("HOUR"))).cast("bigint"))
+df = df.withColumn("SK_CALENDAR", abs(hash(col("YEAR"), col("MONTH"), col("DAY"), col("HOUR"))).cast("bigint"))
+
+df = df.select("SK_CALENDAR", "HOUR", "DAY", "MONTH", "YEAR")
 
 load = LoadDelta(
     sink_path="d_calendar/", 
     sink_name="files", 
-    keys="SK", 
+    keys="SK_CALENDAR", 
     file_format="delta",
     layer="gold").SetSparkSession(spark_session=spark).SetDataframe(df=df)
 
