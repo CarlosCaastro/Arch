@@ -11,21 +11,21 @@ x-spark-common: &spark-common
   networks:
     - code-carlos
 
-# x-airflow-common: &airflow-common
-#   build:
-#     context: .
-#     dockerfile: Dockerfile
-#   env_file:
-#     - airflow.env
-#   volumes:
-#     - ./jobs:/opt/airflow/jobs
-#     - ./dags:/opt/airflow/dags
-#     - ./logs:/opt/airflow/logs
-#     - ./data:/opt/data
-#   depends_on:
-#     - postgres
-#   networks:
-#     - code-carlos
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - airflow.env
+  volumes:
+    - ./jobs:/opt/airflow/jobs
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./data:/opt/data
+  depends_on:
+    - postgres
+  networks:
+    - code-carlos
 
 services:
 
@@ -119,18 +119,18 @@ services:
     networks:
       - code-carlos
 
-  # webserver:
-  #   <<: *airflow-common
-  #   command: bash -c "python /opt/airflow/dags/scripts/connections.py && airflow webserver"
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     - postgres
-  #     - scheduler
+  webserver:
+    <<: *airflow-common
+    command: bash -c "python /opt/airflow/dags/scripts/connections.py && airflow webserver"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - scheduler
 
-  # scheduler:
-  #   <<: *airflow-common
-  #   command: bash -c "airflow db migrate && airflow users create --username airflow --firstname Carlos --lastname Castro --role Admin --email carlos.candradr@gmail.com --password airflow && airflow scheduler"
+  scheduler:
+    <<: *airflow-common
+    command: bash -c "airflow db migrate && airflow users create --username airflow --firstname Carlos --lastname Castro --role Admin --email carlos.candradr@gmail.com --password airflow && airflow scheduler"
 
   minio:
     image: minio/minio
