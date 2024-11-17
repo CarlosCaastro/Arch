@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 class Extract(ABC):
-    def __init__(self, source_path:str, source_name:str, mode:str="full", file_format="delta", options:dict={}, alias:str=None):
+    def __init__(self, source_path:str, source_name:str, mode:str="full", file_format="delta", options:dict={}, layer:str=None,alias:str=None):
+        self.layer = layer
         self.source_path = source_path
         self.source_name = source_name
         self.update_source_path()

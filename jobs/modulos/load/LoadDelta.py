@@ -1,10 +1,10 @@
 from delta.tables import DeltaTable
 from pyspark.sql.utils import AnalysisException
 from modulos.load.load import Load
-from modulos.configs.parametros import generate_bronze_layer_path
+from modulos.configs.parametros import generate_bronze_layer_path, generate_silver_layer_path, generate_gold_layer_path
 from datetime import datetime
 
-class LoadBronze(Load):
+class LoadDelta(Load):
     def assess_if_target_file_exists(self):
         try:
             deltaTable = DeltaTable.forPath(self.spark_session, self.sink)
@@ -15,7 +15,14 @@ class LoadBronze(Load):
         return file_exists
     
     def update_sink_path(self):
-        self.sink_path = generate_bronze_layer_path(output_path=self.sink_path)
+        if self.layer == "bronze":
+            self.sink_path = generate_bronze_layer_path(output_path=self.sink_path)
+        elif self.layer == "silver":
+            self.sink_path = generate_silver_layer_path(output_path=self.sink_path)
+        elif self.layer == "gold":
+            self.sink_path = generate_gold_layer_path(output_path=self.sink_path)
+        else:
+            raise
 
     def execute(self):
         output_file_path = self.sink

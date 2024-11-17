@@ -3,7 +3,8 @@ from pyspark.sql.functions import lit
 from datetime import datetime
 
 class Load(ABC):
-    def __init__(self, sink_path:str, sink_name:str, keys:str, mode:str="overwrite", file_format:str="delta", options:dict={}, catalog:str=None, schema:str=None, table_suffix:str=None):
+    def __init__(self, sink_path:str, sink_name:str, keys:str, mode:str="overwrite", file_format:str="delta", options:dict={}, layer:str=None,catalog:str=None, schema:str=None, table_suffix:str=None):
+      self.layer = layer
       self.sink_path = sink_path
       self.update_sink_path()
       self.sink_name = sink_name

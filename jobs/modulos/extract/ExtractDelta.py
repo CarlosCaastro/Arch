@@ -3,12 +3,17 @@ from pyspark.sql.utils import AnalysisException
 from delta.tables import DeltaTable
 
 from modulos.extract.extract import Extract
-from modulos.configs.parametros import generate_bronze_layer_path
+from modulos.configs.parametros import generate_bronze_layer_path, generate_silver_layer_path, generate_gold_layer_path
 
-class ExtractBronze(Extract):
+class ExtractDelta(Extract):
   
   def update_source_path(self):
-    self.source_path = generate_bronze_layer_path(self.source_path)
+      if self.layer == "bronze":
+          self.source_path = generate_bronze_layer_path(output_path=self.source_path)
+      elif self.layer == "silver":
+          self.source_path = generate_silver_layer_path(output_path=self.source_path)
+      else:
+          self.source_path = generate_gold_layer_path(output_path=self.source_path)
 
   def assess_if_source_file_exists(self):
     path = self.source

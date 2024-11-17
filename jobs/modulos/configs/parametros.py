@@ -3,6 +3,7 @@ BUCKET_NAME:str = "ifood"
 LANDING_LAYER_BUCKET_NAME:str = "landing"
 LANDING_BRONZE_BUCKET_NAME:str = "bronze"
 LANDING_SILVER_BUCKET_NAME:str = "silver"
+LANDING_GOLD_BUCKET_NAME:str = "gold"
 
 def generate_landing_layer_path(output_path:str) -> str:
     landing_layer_path  = f"s3a://{BUCKET_NAME}/{LANDING_LAYER_BUCKET_NAME}/{output_path}"
@@ -18,6 +19,11 @@ def generate_silver_layer_path(output_path:str) -> str:
     bronze_silver_path  = f"s3a://{BUCKET_NAME}/{LANDING_SILVER_BUCKET_NAME}/{output_path}"
 
     return bronze_silver_path
+
+def generate_gold_layer_path(output_path:str) -> str:
+    gold_layer_path  = f"s3a://{BUCKET_NAME}/{LANDING_GOLD_BUCKET_NAME}/{output_path}"
+
+    return gold_layer_path
 
 
 
@@ -42,3 +48,10 @@ FIXED_SCHEMA_INGESTION = [
     ("congestion_surcharge", "double"),
     ("Airport_fee", "double")
 ]
+
+URL_POSTGRE = "jdbc:postgresql://postgres:5432/airflow"
+PROPERTIES_POSTGRE = {
+    "user": "airflow",
+    "password": "airflow",
+    "driver": "org.postgresql.Driver"
+}

@@ -1,9 +1,9 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import lit
-from modulos.configs.parametros import BUCKET_NAME, FIXED_SCHEMA_INGESTION
+from modulos.configs.parametros import BUCKET_NAME, FIXED_SCHEMA_INGESTION, URL_POSTGRE, PROPERTIES_POSTGRE
 from modulos.utils.functions import get_list_files, fix_schemas
-from modulos.load.LoadBronze import LoadBronze
+from modulos.load.LoadDelta import LoadDelta
 
 spark = SparkSession.builder \
     .appName("MinIO Test") \
@@ -36,12 +36,15 @@ final_df = dataframes[0]
 for df in dataframes[1:]:
     final_df = final_df.unionByName(df)
 
-load = LoadBronze(
+load = LoadDelta(
     sink_path="yello_taxi/", 
     sink_name="files", 
     keys="VendorID,tpep_pickup_datetime,tpep_dropoff_datetime,improvement_surcharge,tolls_amount,passenger_count,trip_distance,PULocationID,total_amount", 
-    file_format="delta").SetSparkSession(spark_session=spark).SetDataframe(df=final_df)
+    file_format="delta",
+    layer='bronze').SetSparkSession(spark_session=spark).SetDataframe(df=final_df)
 
 load.execute()
 load.update_control_table(source_name="yellow_taxi_files", source_path="s3a://{BUCKET_NAME}/landing/yellow_taxi_files")
+
+final_df.write.jdbc(url=URL_POSTGRE, table="bronze.yellow_taxi", mode="overwrite", properties=PROPERTIES_POSTGRE)
 

@@ -5,9 +5,9 @@ from pyspark.sql import Window
 import re
 
 from delta.tables import DeltaTable
-from modulos.extract.ExtractBronze import ExtractBronze
-from modulos.load.LoadSilver import LoadSilver
-from modulos.configs.parametros import BUCKET_NAME
+from modulos.extract.ExtractDelta import ExtractDelta
+from modulos.load.LoadDelta import LoadDelta
+from modulos.configs.parametros import URL_POSTGRE, PROPERTIES_POSTGRE
 
 spark = SparkSession.builder \
     .appName("MinIO Test") \
@@ -23,7 +23,7 @@ spark = SparkSession.builder \
     .config("spark.sql.parquet.enableVectorizedReader", "false") \
     .getOrCreate()
 
-extract = ExtractBronze(source_path="yello_taxi",source_name="/files",mode="full",file_format="delta").SetSparkSession(spark_session=spark)
+extract = ExtractDelta(source_path="yello_taxi",source_name="/files",mode="full",file_format="delta", layer='bronze').SetSparkSession(spark_session=spark)
 
 df = extract.execute()
 
@@ -56,11 +56,14 @@ def sanitize_input(df, output_keys):
 
 sanitized_df = sanitize_input(df, "VendorID,tpep_pickup_datetime,tpep_dropoff_datetime,improvement_surcharge,tolls_amount,passenger_count,trip_distance,PULocationID,total_amount")
 
-load = LoadSilver(
+load = LoadDelta(
     sink_path="yello_taxi/", 
     sink_name="files", 
     keys="VendorID,tpep_pickup_datetime,tpep_dropoff_datetime,improvement_surcharge,tolls_amount,passenger_count,trip_distance,PULocationID,total_amount", 
-    file_format="delta").SetSparkSession(spark_session=spark).SetDataframe(df=sanitized_df)
+    file_format="delta",
+    layer='silver').SetSparkSession(spark_session=spark).SetDataframe(df=sanitized_df)
 
 load.execute()
 load.update_control_table(source_name="yellow_taxi_files", source_path="s3a://{BUCKET_NAME}/landing/yellow_taxi_files")
+
+sanitized_df.write.jdbc(url=URL_POSTGRE, table="silver.yellow_taxi", mode="overwrite", properties=PROPERTIES_POSTGRE)

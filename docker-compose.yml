@@ -108,16 +108,16 @@ services:
       - ./data:/opt/data
       - ./warehouse:/opt/bitnami/spark/warehouse
       
-  # postgres:
-  #   image: postgres:14.0
-  #   environment:
-  #     - POSTGRES_USER=airflow
-  #     - POSTGRES_PASSWORD=airflow
-  #     - POSTGRES_DB=airflow
-  #   ports:
-  #     - "5432:5432"
-  #   networks:
-  #     - code-carlos
+  postgres:
+    image: postgres:14.0
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "5432:5432"
+    networks:
+      - code-carlos
 
   # webserver:
   #   <<: *airflow-common
