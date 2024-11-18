@@ -6,7 +6,7 @@ x-spark-common: &spark-common
     dockerfile: Dockerfile_spark
   volumes:
     - ./jobs:/opt/bitnami/spark/jobs
-    - ./warehouse:/opt/bitnami/spark/warehouse
+    - spark-warehouse:/opt/bitnami/spark-warehouse
     - ./data:/opt/data
     - spark-jars:/opt/bitnami/spark/jars
   networks:
@@ -24,6 +24,7 @@ x-airflow-common: &airflow-common
     - ./logs:/opt/airflow/logs
     - ./data:/opt/data
     - spark-jars:/opt/bitnami/spark/jars
+    - spark-warehouse:/opt/bitnami/spark-warehouse
   depends_on:
     - postgres
   networks:
@@ -54,6 +55,7 @@ services:
       - ./volumes/hive/drivers/hadoop-aws-3.3.2.jar:/opt/hive/lib/hadoop-aws.jar
       - ./volumes/hive/drivers/aws-java-sdk-bundle-1.11.1026.jar:/opt/hive/lib/aws-java-sdk-bundle.jar
       - ./volumes/hive/warehouse:/opt/hive/data/warehouse
+      - spark-warehouse:/opt/bitnami/spark-warehouse
     command: >
       bash -c "
       sleep 10 && 
@@ -92,6 +94,7 @@ services:
       - ./data:/opt/data
       - ./warehouse:/opt/bitnami/spark/warehouse
       - spark-jars:/opt/bitnami/spark/jars
+      - spark-warehouse:/opt/bitnami/spark-warehouse
       
   postgres:
     image: postgres:14.0
@@ -128,6 +131,7 @@ services:
       MINIO_ROOT_PASSWORD: minio123
     volumes:
       - ./minio/data:/data
+      - spark-warehouse:/opt/bitnami/spark-warehouse
     networks:
       - code-carlos
 
@@ -143,16 +147,30 @@ services:
     volumes:
       - ./notebooks:/home/jovyan/work
       - ./data:/opt/data
+      - spark-warehouse:/opt/bitnami/spark-warehouse
     depends_on:
       - spark-master
       - minio
     networks:
       - code-carlos
 
+  trino:
+    image: trinodb/trino
+    container_name: trino
+    ports:
+      - "8181:8080"
+    networks:
+      - code-carlos
+    volumes:
+      - ./volumes/trino/etc:/etc/trino
+    depends_on:
+      - hive-metastore
+      - minio
+
 volumes:
   postgres-data:
   data:
-  warehouse:
+  spark-warehouse:
   volumes:
   spark-jars:
 
