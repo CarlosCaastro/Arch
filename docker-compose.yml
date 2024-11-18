@@ -134,7 +134,21 @@ services:
       - spark-warehouse:/opt/bitnami/spark-warehouse
     networks:
       - code-carlos
-      
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minio minio123;
+      /usr/bin/mc mb myminio/ifood;
+      /usr/bin/mc policy set public myminio/ifood;
+      exit 0;
+      "
+    networks:
+      - code-carlos
+
   trino:
     image: trinodb/trino:400
     container_name: trino
