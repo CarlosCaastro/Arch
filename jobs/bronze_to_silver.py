@@ -71,6 +71,4 @@ load = LoadDelta(
 load.execute()
 load.update_control_table(source_name="yellow_taxi_files", source_path="s3a://{BUCKET_NAME}/landing/yellow_taxi_files")
 
-sanitized_df.write.jdbc(url=URL_POSTGRE, table="silver.yellow_taxi", mode="overwrite", properties=PROPERTIES_POSTGRE)
-
 spark.stop()
