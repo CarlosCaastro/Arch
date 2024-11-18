@@ -1,0 +1,13 @@
+.idea
+venv
+logs
+__pycache__
+minio
+hadoop-libs
+hive-config
+postgres
+postgres-data
+volumes
+minio
+jars
+warehouse

@@ -1,0 +1,179 @@
+version: '3'
+
+x-spark-common: &spark-common
+  build:
+    context: .
+    dockerfile: Dockerfile_spark
+  volumes:
+    - ./jobs:/opt/bitnami/spark/jobs
+    - spark-warehouse:/opt/bitnami/spark-warehouse
+    - ./data:/opt/data
+    - spark-jars:/opt/bitnami/spark/jars
+  networks:
+    - code-carlos
+
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - airflow.env
+  volumes:
+    - ./jobs:/opt/airflow/jobs
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./data:/opt/data
+    - spark-jars:/opt/bitnami/spark/jars
+    - spark-warehouse:/opt/bitnami/spark-warehouse
+  depends_on:
+    - postgres
+  networks:
+    - code-carlos
+
+services:
+  hive-metastore:
+    image: apache/hive:4.0.0-alpha-2
+    container_name: hive-metastore
+    environment:
+      SERVICE_NAME: metastore
+      DB_DRIVER: postgres
+      SERVICE_OPTS: >
+        -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
+        -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/airflow
+        -Djavax.jdo.option.ConnectionUserName=airflow
+        -Djavax.jdo.option.ConnectionPassword=airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "9083:9083"
+      - "10000:10000"
+    volumes:
+      - ./volumes/hive/conf/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml:ro
+      - ./volumes/hive/conf/metastore-site.xml:/opt/hive/conf/metastore-site.xml:ro
+      - ./volumes/hive/drivers/postgresql-42.5.1.jar:/opt/hive/lib/postgres.jar
+      - ./volumes/hive/drivers/hadoop-aws-3.3.2.jar:/opt/hive/lib/hadoop-aws.jar
+      - ./volumes/hive/drivers/aws-java-sdk-bundle-1.11.1026.jar:/opt/hive/lib/aws-java-sdk-bundle.jar
+      - ./volumes/hive/warehouse:/opt/hive/data/warehouse
+      - spark-warehouse:/opt/bitnami/spark-warehouse
+    command: >
+      bash -c "
+      sleep 10 && 
+      /opt/hive/bin/schematool -dbType postgres -initSchema &&
+      /opt/hive/bin/hive --service metastore
+      "
+    networks:
+      - code-carlos
+
+  spark-master:
+    <<: *spark-common
+    command: bin/spark-class org.apache.spark.deploy.master.Master
+    ports:
+      - "9090:8080"
+      - "7077:7077"
+    environment:
+      PYSPARK_PYTHON: /usr/local/bin/python3.11
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3.11
+
+  spark-worker:
+    <<: *spark-common
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    depends_on:
+      - spark-master
+    ports:
+      - "9091:8081"
+    environment:
+      SPARK_MODE: worker
+      SPARK_WORKER_CORES: 4
+      SPARK_WORKER_MEMORY: 2g
+      SPARK_MASTER_URL: spark://spark-master:7077
+      PYSPARK_PYTHON: /usr/local/bin/python3.11
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3.11
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./data:/opt/data
+      - ./warehouse:/opt/bitnami/spark/warehouse
+      - spark-jars:/opt/bitnami/spark/jars
+      - spark-warehouse:/opt/bitnami/spark-warehouse
+      
+  postgres:
+    image: postgres:14.0
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "5432:5432"
+    networks:
+      - code-carlos
+
+  webserver:
+    <<: *airflow-common
+    command: bash -c "python /opt/airflow/dags/scripts/connections.py && airflow webserver"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - scheduler
+
+  scheduler:
+    <<: *airflow-common
+    command: bash -c "airflow db migrate && airflow users create --username airflow --firstname Carlos --lastname Castro --role Admin --email carlos.candradr@gmail.com --password airflow && airflow scheduler"
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    volumes:
+      - ./minio/data:/data
+      - spark-warehouse:/opt/bitnami/spark-warehouse
+    networks:
+      - code-carlos
+
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      PYSPARK_PYTHON: /usr/local/bin/python3
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/opt/data
+      - spark-warehouse:/opt/bitnami/spark-warehouse
+    depends_on:
+      - spark-master
+      - minio
+    networks:
+      - code-carlos
+
+  trino:
+    image: trinodb/trino
+    container_name: trino
+    ports:
+      - "8181:8080"
+    networks:
+      - code-carlos
+    volumes:
+      - ./volumes/trino/etc:/etc/trino
+    depends_on:
+      - hive-metastore
+      - minio
+
+volumes:
+  postgres-data:
+  data:
+  spark-warehouse:
+  volumes:
+  spark-jars:
+
+networks:
+  code-carlos:
+    driver: bridge
