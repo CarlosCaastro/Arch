@@ -134,28 +134,9 @@ services:
       - spark-warehouse:/opt/bitnami/spark-warehouse
     networks:
       - code-carlos
-
-  jupyter:
-    image: jupyter/pyspark-notebook:latest
-    container_name: jupyter
-    ports:
-      - "8888:8888"
-    environment:
-      JUPYTER_ENABLE_LAB: "yes"
-      PYSPARK_PYTHON: /usr/local/bin/python3
-      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python3
-    volumes:
-      - ./notebooks:/home/jovyan/work
-      - ./data:/opt/data
-      - spark-warehouse:/opt/bitnami/spark-warehouse
-    depends_on:
-      - spark-master
-      - minio
-    networks:
-      - code-carlos
-
+      
   trino:
-    image: trinodb/trino
+    image: trinodb/trino:400
     container_name: trino
     ports:
       - "8181:8080"

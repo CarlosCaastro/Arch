@@ -51,6 +51,4 @@ load = LoadDelta(
 
 load.execute()
 
-df.write.jdbc(url=URL_POSTGRE, table="gold.d_calendar", mode="overwrite", properties=PROPERTIES_POSTGRE)
-
 spark.stop()

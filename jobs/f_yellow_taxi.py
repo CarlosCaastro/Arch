@@ -47,6 +47,4 @@ load = LoadDelta(
 
 load.execute()
 
-df_filtred.write.jdbc(url=URL_POSTGRE, table="gold.f_yellow_taxi", mode="overwrite", properties=PROPERTIES_POSTGRE)
-
 spark.stop()
