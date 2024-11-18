@@ -8,7 +8,7 @@ default_args = {
     "start_date": datetime(now.year, now.month, now.day),
 }
 
-dags_a_serem_executadas = ['ingestion', 'landing_to_bronze', 'bronze_to_silver', 'd_calendar', 'f_yellow_taxi'] 
+dags_a_serem_executadas = ['ingestion', 'landing_to_bronze', 'bronze_to_silver', 'd_calendar', 'f_yellow_taxi','schema_tabela'] 
 
 with DAG(
     'master_dag',
